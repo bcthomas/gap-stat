@@ -73,9 +73,21 @@ describe('gap_statistic', function() {
           [200, 0,   23 ],
           [100, 54,  100],
           [255, 13,  8  ] ];
-
     result = gs.dispersion(d, 1);
     expect(result).to.eql(11.99545);
+  });
+
+  it('returns a gap_statistic object', function() {
+    var result,
+    d = [ [20,  20,  80 ],
+          [22,  22,  90 ],
+          [250, 255, 253],
+          [0,   30,  70 ],
+          [200, 0,   23 ],
+          [100, 54,  100],
+          [255, 13,  8  ] ];
+    result = gs.gap_statistic(d, 1, 5);
+    expect(result).to.be.an.instanceof(gs.GapStatResult);
   });
 
   it('suggests a cluster size', function() {
@@ -90,7 +102,7 @@ describe('gap_statistic', function() {
               [5.11476706,-0.61566978],  [6.10444958,0.74085445],   [4.63408230,-0.36047843],
               [4.12358049,-0.77732542],  [5.31772144,0.56882625],   [3.49000895,-0.64345730] ],
         result = gs.gap_statistic(d, 1, 5);
-    expect(result).to.eql(3);
+    expect(result.cluster_size).to.eql(3);
   });
 });
 
