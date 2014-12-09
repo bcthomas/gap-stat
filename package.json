@@ -1,7 +1,7 @@
 {
   "name": "gap-stat",
-  "version": "0.0.2",
-  "description": "Gap statistic in node.js - inspired from R (https://github.com/echen/gap-statistic)",
+  "version": "0.0.3",
+  "description": "Gap statistic for kmeans analysis",
   "main": "index.js",
   "scripts": {
     "test": "mocha test/*.js"
