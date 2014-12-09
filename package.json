@@ -1,0 +1,32 @@
+{
+  "name": "gap-stat",
+  "version": "0.0.1",
+  "description": "Gap statistic in node.js - inspired from R (https://github.com/echen/gap-statistic)",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bcthomas/gap-stat.git"
+  },
+  "keywords": [
+    "gap statistic",
+    "statistics",
+    "kmeans"
+  ],
+  "author": "Brian C. Thomas <bxt.x42@gmail.com> (http://ggkbase.berkeley.edu/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bcthomas/gap-stat/issues"
+  },
+  "homepage": "https://github.com/bcthomas/gap-stat",
+  "devDependencies": {
+    "mocha": "*",
+    "chai": "*"
+  },
+  "dependencies": {
+    "underscore": "*",
+    "clusterfck": "*"
+  }
+}
