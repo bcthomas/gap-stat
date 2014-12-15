@@ -1,8 +1,8 @@
 {
   "name": "gap-stat",
-  "version": "0.0.3",
   "description": "Gap statistic for kmeans analysis",
-  "main": "index.js",
+  "version": "0.0.4",
+  "main": "lib/gap_stat",
   "scripts": {
     "test": "mocha test/*.js"
   },
