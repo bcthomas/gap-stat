@@ -1,10 +1,34 @@
 {
   "name": "gap-stat",
-  "description": "Gap statistic for kmeans analysis",
+  "description": "Gap statistic for estimating the optimal number of clusters, with pluggable clustering algorithms",
   "version": "0.0.4",
-  "main": "lib/gap_stat",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "scripts": {
-    "test": "mocha test/*.js"
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish --provenance",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -13,7 +37,8 @@
   "keywords": [
     "gap statistic",
     "statistics",
-    "kmeans"
+    "kmeans",
+    "clustering"
   ],
   "author": "Brian C. Thomas <bxt.x42@gmail.com> (http://ggkbase.berkeley.edu/)",
   "license": "MIT",
@@ -22,11 +47,10 @@
   },
   "homepage": "https://github.com/bcthomas/gap-stat",
   "devDependencies": {
-    "mocha": "*",
-    "chai": "*"
-  },
-  "dependencies": {
-    "underscore": "*",
-    "clusterfck": "*"
+    "@biomejs/biome": "^2.2.0",
+    "@changesets/cli": "^2.29.0",
+    "@vitest/coverage-v8": "^3.2.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
   }
 }

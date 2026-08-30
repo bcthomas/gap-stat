@@ -141,34 +141,14 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
 
 ## 6. Implementation phases (PR-sized, each independently mergeable)
 
-### Phase 0 — Toolchain foundation  *(one PR, no behavior change)*
+### Phase 0 — Toolchain foundation  *(one PR, no behavior change)* — ✅ LANDED
 
-- [ ] `package.json`: `"type": "module"`, `engines.node >= 20`, `exports` map:
-  ```json
-  {
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
-      }
-    },
-    "types": "./dist/index.d.ts",
-    "files": ["dist"],
-    "sideEffects": false,
-    "scripts": {
-      "build": "tsc -p tsconfig.build.json",
-      "typecheck": "tsc -p tsconfig.json --noEmit",
-      "test": "vitest run",
-      "test:watch": "vitest",
-      "lint": "biome check .",
-      "lint:fix": "biome check --write .",
-      "prepack": "npm run build"
-    }
-  }
-  ```
-  Runtime `dependencies` field **deleted entirely** (keep `underscore`/`clusterfck`/
-  `mocha`/`chai` as temporary devDeps only until Phase 2 removes them together with the old code).
-- [ ] `tsconfig.json` (strictest useful set for a published lib):
+- [x] `package.json`: `"type": "module"`, `engines.node >= 20`, `sideEffects: false`,
+  build/typecheck/test/lint scripts. **Deviation:** the `exports` map is deferred to
+  Phase 2 — during the transition `main` points at the renamed legacy
+  `lib/gap_stat.cjs` so the package stays `require()`-able at every commit.
+- [x] `tsconfig.json` (strictest useful set for a published lib) + `tsconfig.build.json`
+  (emits `dist/` for Phase 2):
   ```json
   {
     "compilerOptions": {
@@ -181,59 +161,86 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
       "exactOptionalPropertyTypes": true,
       "verbatimModuleSyntax": true,
       "isolatedModules": true,
-      "declaration": true,
-      "declarationMap": true,
-      "sourceMap": true,
       "skipLibCheck": true,
       "noEmit": true
     },
-    "include": ["src", "test"]
+    "include": ["src", "test", "vitest.config.ts"]
   }
   ```
-  `tsconfig.build.json` extends it, `include: ["src"]`, emits to `dist/`.
-- [ ] `biome.json` (format + lint, 2-space, double or single quotes per taste).
-- [ ] `vitest.config.ts` with v8 coverage pointed at `src/`.
-- [ ] Sanity: old mocha tests still runnable (`vitest` will happily run the old JS
-  tests during transition) — proves toolchain before refactor.
-- **Acceptance:** `npm run typecheck && npm run lint && npm test` all green.
+- [x] `biome.json` (format + lint, 2-space, single quotes; `src/**` + `test/**` only
+  until legacy code is deleted; `noNonNullAssertion` off for bounds-checked matrix indexing).
+  **Gotchas learned on this Biome version (2.x):** `biome.json` is strict JSON —
+  JSONC comments silently prevent the config from loading; the deprecated
+  `"recommended": true` field must be migrated via `biome migrate` to
+  `"preset": "recommended"`; folder exclusions go in `files.includes` as `"!lib"`
+  (no glob) per `lint/suspicious/useBiomeIgnoreFolder`.
+- [x] `vitest.config.ts` (coverage on `src/**` opt-in; thresholds + `@vitest/coverage-v8` in Phase 3).
+- [x] Legacy mocha suite preserved: `lib/gap_stat.js` → `lib/gap_stat.cjs`,
+  `test/index.js` → `test/index.cjs` (extensionless `.cjs` requires updated), run via
+  `npm run test:legacy` so the package stays functional at every commit.
+  **Discovery:** the inherited `suggests a cluster size` assertion is nondeterministic —
+  clusterfck seeds k-means from `Math.random()`, so k=3 vs k=4 flips run to run at
+  `bootstrap_count=10`. Annotated `this.retries(3)` with a pointer to the Phase 2
+  deterministic replacement. This flake is the motivating case for seeded RNGs.
+- **Acceptance:** `npm run typecheck && npm run lint && npm test` all green
+  (after `npm install` of the new devDeps).
 
-### Phase 1 — Pure-function core in TS  *(replaces `underscore`)*
+### Phase 1 — Pure-function core in TS  *(replaces `underscore`)* — ✅ LANDED
 
-- [ ] `matrix.ts`: `transposed`, `columnMin/Max/Mean/Sum` as strict generics over
-  `readonly (readonly number[])[]` — native `map`/`reduce`, no transposition cost
-  hoop-jumping (the old `_.each(_.zip.apply(...))` back-flip goes away).
-- [ ] `random.ts`: `mulberry32(seed)` (≈10 lines, zero deps) + `RANDOM` default.
-- [ ] `validate.ts`: `RangeError`/`TypeError` for non-numeric, non-rectangular,
-  empty, NaN/±Infinity data, bad `kMin/kMax` bounds.
-- [ ] Vitest coverage for every exported helper (ports all 6 underscore-dependent
-  tests; adds edge cases: single row, single column, negative values, large ints).
-- **Acceptance:** helpers fully covered; no `underscore` import remains anywhere.
+- [x] `src/matrix.ts`: `transposed`, `columnMin/Max/Mean/Sum` — native `map`/`reduce`,
+  no transposition hoop-jumping, full double precision (0.x rounded intermediates).
+- [x] `src/random.ts`: `mulberry32(seed)` (zero deps, golden-value tested) as the
+  seeded `Rng` for reproducible bootstraps/k-means/tests.
+- [x] `src/types.ts`: full public contract defined up front — `Rng`, `ClusteringFn`,
+  `ReferenceDistributionFn`, `GapStatisticOptions`, `GapStatisticResult` — so Phase 2
+  modules are written against the final API.
+- [x] `src/validate.ts`: `RangeError`/`TypeError` for non-array, non-rectangular, empty,
+  NaN/±Infinity data and bad `kMin`/`kMax` bounds.
+- [x] `src/index.ts` exports helpers + types.
+- [x] Vitest coverage: all 5 underscore-dependent tests ported plus edge cases
+  (single row/column, negatives/floats, rectangular, non-mutation, golden PRNG values,
+  every validation branch, export surface).
+- [x] Logic smoke-tested by running the TS directly under Node's type stripping.
+- **Status:** `src/` has zero `underscore` imports; the `underscore` dependency itself
+  still sits in `package.json` only for the legacy `test:legacy` suite and is removed with
+  the legacy files in Phase 2.
 
-### Phase 2 — Algorithm + plugin seam  *(removes `clusterfck`; the core PR)*
+### Phase 2 — Algorithm + plugin seam  *(removes `clusterfck`; the core PR)* — ✅ LANDED
 
-- [ ] `kmeans.ts`: built-in default `kmeans: ClusteringFn` —
-  - k-means++ init (seeded), Lloyd's iterations, `maxIterations` cap (default 300),
-    empty-cluster re-seeding policy (drop to `k`-means on furthest point),
-    deterministic under seed.
-- [ ] `dispersion.ts`: `dispersion(data, labels) → log Σ within-cluster SS` —
-  **no clustering call inside**; takes labels so it tests pure, and any
-  `ClusteringFn` output feeds it.
-- [ ] `reference.ts`: `uniformReference(data, rng)` per-column-min/max generator
-  (fix the O(n·2d) clear-the-array dance — plain `Array.from`), plus
-  `bootstrapReferenceDispersion` loop.
-- [ ] `gapStatistic.ts`: options-object orchestration; picks argmax gap; optional
-  1-SE rule; returns frozen result object.
-- [ ] Delete `lib/`, old `mocha`/`chai` tests, and **uninstall `underscore`,
-  `clusterfck`, `mocha`, `chai`, `any-*` — `dependencies` stays empty.
-- [ ] Port behavioral tests using **seeded RNG** (deterministic, no flaky CI):
-  - golden `dispersion` value regenerated from fixed data (document the new value),
-  - `gapStatistic` returns `GapStatisticResult` with all fields,
-  - planted-clusters dataset ⇒ correct `clusterSize` (existing test data is good),
-  - **plugin test**: hand-rolled trivial `ClusteringFn` (e.g. round-robin labels)
-    drives the statistic end-to-end,
-  - k-means reproducibility: same seed ⇒ identical labels.
-- **Acceptance:** `npm ls` shows zero runtime deps; coverage ≥ 90% lines;
-  all tests pass on the Node matrix.
+- [x] `kmeans.ts`: built-in default `kmeans: ClusteringFn` —
+  - `createKMeans({ maxIterations })` factory + `defaultKMeans` singleton,
+    `DEFAULT_MAX_ITERATIONS = 300`; k-means++ init (`kmeansPlusPlus`, seeded),
+    Lloyd's iterations with lowest-index tie-breaks, empty-cluster repair that
+    steals the globally furthest point (never emptying a singleton),
+    deterministic under seed. **Bug caught pre-test via golden smoke run:**
+    the empty-cluster repair originally returned centroids where the loop
+    expected labels — silently poisoning the next iteration; restructured so
+    it mutates labels in place and the caller binds arrays explicitly.
+- [x] `dispersion.ts`: `dispersion(data, labels) → log Σ within-cluster SS` —
+  **no clustering call inside**; validates labels (length/integer/non-negative),
+  single O(nd) pass, clamps float-cancelled tiny negatives to 0 before the log,
+  returns `-Infinity` for W_k = 0 (documented + tested).
+- [x] `reference.ts`: `uniformReference(data, rng)` — continuous per-column
+  `[min, max)` draws (0.x floored to integers); `referenceDispersionStats`
+  keeps the paper's `sd/B × √(1+1/B)` bias correction; bootstrap loop lives
+  in `gapStatistic.ts`.
+- [x] `gapStatistic.ts`: options-object orchestration (`kMin/kMax/bootstrapCount/
+  clusteringFn/referenceDistribution/rng/firstSeRule` with exported
+  `DEFAULT_K_MIN/K_MAX/BOOTSTRAP_COUNT`); argmax gap; optional 1-SE rule with
+  argmax fallback; returns an `Object.freeze`d result.
+- [x] Deleted `lib/gap_stat.cjs` + `test/index.cjs`; removed `mocha`, `chai`,
+  `test:legacy`; **`dependencies` key deleted outright** (`underscore` and
+  `clusterfck` are gone); `package.json` now carries `exports` map (types +
+  import → `dist/`), `files: ["dist"]`, and the updated description.
+- [x] Behavioral tests, all seeded RNG (zero flakiness): dispersion golden
+  (`1.9924301646902063`) + row-permutation invariance + −∞ cases; planted
+  clusters ⇒ `clusterSize 3` across seeds 42/7/2025 (full-precision golden
+  gaps captured); **plugin test** — round-robin `ClusteringFn` drives the
+  whole statistic (dispersions `log 10`, `log 8` verified against theory);
+  1-SE rule at B=50 ⇒ `firstSeK 3`; frozen result shape; k-means golden
+  labels, k=1/k=n/empty-cluster-repair cases; validation errors.
+- **Acceptance:** `npm install` (prunes removed deps) ⇒ zero runtime deps;
+  typecheck + biome + vitest green locally.
 
 ### Phase 3 — Hardening & DX
 
@@ -245,14 +252,34 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
 - [ ] Optional: `@fast-check` devDep for property tests
   (e.g. dispersion monotonicity *decreasing-ish* in k, permutation invariance of row order).
 
-### Phase 4 — CI / release plumbing
+### Phase 4 — CI / release plumbing — ✅ LANDED (workflows ready; manual activation below)
 
-- [ ] GitHub Actions `ci.yml`: Node 20/22/24 × [lint → typecheck → test+coverage → build];
-  upload to Codecov (free) and add badge.
-- [ ] Changesets (`@changesets/cli`) for versioned CHANGELOG; PRs carry changesets.
-- [ ] Release workflow with **npm provenance** (`npm publish --provenance`, OIDC) —
-  modern supply-chain best practice. 1.0.0 tagged as `latest`.
-- [ ] Branch protection: CI required before merge.
+- [x] `.github/workflows/ci.yml`: Node 20/22/24 matrix × lint → typecheck →
+  test → build; coverage (v8, lcov via `npm run test:coverage`) runs once on
+  Node 22 and uploads to Codecov (`codecov/codecov-action@v5`, tokenless for
+  public repos, `CODECOV_TOKEN` optional); minimal `permissions`, concurrency
+  cancel-in-progress, `npm ci` + setup-node npm cache; `@vitest/coverage-v8`
+  added as devDep (thresholds still land in Phase 3).
+- [x] Changesets: `.changeset/config.json` (public, baseBranch main) + starter
+  changeset declaring the **major** bump for the 1.0.0 rewrite; scripts wired:
+  `changeset`, `version-packages` (`changeset version`), `release`
+  (`changeset publish --provenance`).
+- [x] `.github/workflows/release.yml`: on merge to main, changesets/action
+  opens/updates a *Version Packages* PR; merging it publishes to npm with
+  **provenance** (`NPM_CONFIG_PROVENANCE` + `id-token: write` OIDC) and pushes
+  the tag — the 1.0.0 release ships as `latest`.
+- [x] README CI + Codecov badges.
+- [ ] **Manual (GitHub UI, one-time):**
+  1. Add secret `NPM_TOKEN` (npm automation token for the `bcthomas` account).
+  2. Optional: link repo on codecov.io and add `CODECOV_TOKEN` secret.
+  3. Settings → Branches → protect `main`: require PR + require status check
+     `Verify (Node 22)` (or all matrix jobs); consider requiring linear history.
+  4. First merge to main triggers CI; first Version PR merge triggers the
+     npm publish + tag (double-check the entry on npmjs.com shows a provenance badge).
+- [ ] Optional hardening (defer): SHA-pin actions instead of major tags (`gh`):
+  `actions/checkout@11bd719...`, etc.
+- **Acceptance:** CI green on all three Node versions; release workflow
+  publishes with provenance on the next Version PR merge.
 
 ### Phase 5 — Docs
 

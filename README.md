@@ -1,6 +1,9 @@
 gap-stat
 ========
 
+[![CI](https://github.com/bcthomas/gap-stat/actions/workflows/ci.yml/badge.svg)](https://github.com/bcthomas/gap-stat/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/bcthomas/gap-stat/graph/badge.svg)](https://codecov.io/gh/bcthomas/gap-stat)
+
 The gap statistic for K-means clustering.  Based on an R implementation
 (https://github.com/echen/gap-statistic).
 

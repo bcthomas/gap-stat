@@ -1,0 +1,42 @@
+name: Release
+
+# Changesets flow: contributors add changeset files in PRs; on merge to main
+# this workflow opens a "Version Packages" PR; merging that PR publishes to
+# npm with provenance and pushes the release tag.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write         # push version commits + tags
+  pull-requests: write    # open/update the Version Packages PR
+  id-token: write         # npm provenance (OIDC)
+
+jobs:
+  release:
+    name: Version / publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Version packages (or publish when a Version PR was merged)
+        uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # npm >= 9.5 reads this for provenance; changeset publish inherits it.
+          NPM_CONFIG_PROVENANCE: true

@@ -16,6 +16,9 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+# TypeScript build output (published via `files` whitelist)
+dist/
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
@@ -29,6 +32,3 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
-
-# Local coding-agent state (pi sessions, memory)
-.pi/
