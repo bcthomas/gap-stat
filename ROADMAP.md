@@ -278,8 +278,10 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
      npm publish + tag (double-check the entry on npmjs.com shows a provenance badge).
 - [ ] Optional hardening (defer): SHA-pin actions instead of major tags (`gh`):
   `actions/checkout@11bd719...`, etc.
-- **Acceptance:** CI green on all three Node versions; release workflow
-  publishes with provenance on the next Version PR merge.
+- **Acceptance:** CI green on all three Node versions — ✅ **confirmed on the first
+  push to `master`** (workflows retargeted from `main` after discovering the
+  repo's real default branch; ruleset targeting set to `refs/heads/master`).
+  Release workflow state pending `NPM_TOKEN` + Version PR merge.
 
 ### Phase 5 — Docs
 

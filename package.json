@@ -1,7 +1,7 @@
 {
   "name": "gap-stat",
   "description": "Gap statistic for estimating the optimal number of clusters, with pluggable clustering algorithms",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": {

@@ -5,7 +5,7 @@ name: Release
 # npm with provenance and pushes the release tag.
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: write         # push version commits + tags
