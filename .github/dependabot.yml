@@ -1,0 +1,17 @@
+version: 2
+
+updates:
+  # Keep dev tooling patched; all bumps land as grouped version PRs.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  # Keep the GitHub Actions we pin by tag current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
