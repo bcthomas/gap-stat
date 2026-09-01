@@ -65,7 +65,9 @@ export interface GapStatisticOptions {
 export interface GapStatisticResult {
   /** `k` with the largest gap value (the recommended number of clusters). */
   readonly clusterSize: number;
-  /** GAP_k = mean reference dispersion − observed dispersion, per requested k. */
+  /** GAP_k = mean reference dispersion − observed dispersion, per requested k.
+   * Fully degenerate data (all observed and reference W_k equal 0) yields NaN
+   * gaps; `clusterSize` then falls back to the smallest requested k. */
   readonly gaps: readonly number[];
   /** Observed log(W_k) dispersion for each requested k. */
   readonly dispersions: readonly number[];

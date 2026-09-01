@@ -23,6 +23,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",

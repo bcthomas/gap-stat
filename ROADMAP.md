@@ -242,15 +242,30 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
 - **Acceptance:** `npm install` (prunes removed deps) ⇒ zero runtime deps;
   typecheck + biome + vitest green locally.
 
-### Phase 3 — Hardening & DX
+### Phase 3 — Hardening & DX — ✅ LANDED
 
-- [ ] Coverage thresholds in `vitest.config.ts` (e.g. `lines: 90`, `branches: 85`).
-- [ ] Edge-case suite: `k > n`, duplicate points, k=n, high-dimension data,
-  extreme scale disparity, `bootstrapCount: 1`.
-- [ ] Benchmarks (optional): `vitest bench` for dispersion on 1k×5 data.
-- [ ] `.nvmrc`, `.gitignore` for `dist/`, `coverage/`.
-- [ ] Optional: `@fast-check` devDep for property tests
-  (e.g. dispersion monotonicity *decreasing-ish* in k, permutation invariance of row order).
+- [x] Coverage gates live in `vitest.config.ts` (lines/functions/statements ≥ 95,
+  branches ≥ 90, enforced on `npm run test:coverage` in CI); `src/types.ts` excluded
+  (declarations only). **Achieved: 100% lines / 100% branches / 100% functions** across
+  `src/` — 89 seeded tests.
+- [x] Edge-case suite (`test/edgeCases.test.ts`): 50-dimensional data (+ k-means
+  partition proof), extreme scale disparity (×1000 column), single-point and
+  all-identical pipelines (documented NaN-gap fallback to kMin), k = n, single-element
+  k range, `bootstrapCount: 1` (SD collapses to 0), non-mutation guarantee, sparse-row
+  defensive guard.
+- [x] `types.ts` gap-field docstring now documents the NaN-on-degenerate-data contract.
+- [x] Micro-benchmarks (`npm run bench` → `test/dispersion.bench.ts`: dispersion at
+  1000×5, k-means at 1000×5).
+- [x] `.nvmrc` (22); `dist/` + `coverage/` already git-ignored (Phase 0).
+- [x] Property-style invariants covered without `@fast-check` (row-permutation
+  invariance, input non-mutation, determinism) — no extra dependency.
+- **Outstanding:** the 5 open Dependabot PRs (all majors — vitest 4, TypeScript 7,
+  changesets 3, codecov 7, actions 7). Merge guidance: #1/#2/#4 are safe to merge and
+  CI-verify individually; **#3 (changesets/action v2) and #5 (npm group) must land
+  together** — action v2 requires changesets CLI ≥ 3 and renames its inputs
+  (`version-script`, `publish-script`, and a `github-token` *input* instead of env);
+  our release already ships via Trusted Publishing so the coordinated migration is the
+  only remaining release-plumbing change left in the repo.
 
 ### Phase 4 — CI / release plumbing — ✅ LANDED (workflows ready; manual activation below)
 

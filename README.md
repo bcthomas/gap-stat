@@ -36,10 +36,10 @@ console.log(`best cluster size: ${result.clusterSize}`); // → 3
 bootstrap reference datasets drawn uniformly over the data's column ranges (the null
 model from the paper) and reports the `k` with the largest gap.
 
-> A note of honesty: the gap statistic holds **your** clustering up against a null
-> model — it can't rescue an algorithm that's a poor fit for your data. Very dispersed
-> or heavy-tailed data can produce gaps that keep growing with `k`; that's a signal from
-> your clustering, not a bug in the math.
+> Note: the gap statistic holds **your** clustering up against a null model — it can't
+> rescue an algorithm that's a poor fit for your data. Very dispersed or heavy-tailed
+> data can produce gaps that keep growing with `k`; that's a signal from your
+> clustering, not a bug in the math.
 
 ## Bring your own clustering algorithm
 
@@ -92,8 +92,8 @@ gap statistic measures it.
 
 ## Reproducibility
 
-All randomness is injected. Pin a seeded generator and every run is byte-identical —
-unlike 0.x, which silently depended on `Math.random()`:
+All randomness is injected. Locking in a seeded generator and every run is
+byte-identical — unlike 0.x, which silently depended on `Math.random()`:
 
 ```ts
 import { gapStatistic, mulberry32 } from "gap-stat";
