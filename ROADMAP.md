@@ -278,20 +278,38 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
      npm publish + tag (double-check the entry on npmjs.com shows a provenance badge).
 - [ ] Optional hardening (defer): SHA-pin actions instead of major tags (`gh`):
   `actions/checkout@11bd719...`, etc.
-- **Acceptance:** CI green on all three Node versions — ✅ **confirmed on the first
-  push to `master`** (workflows retargeted from `main` after discovering the
-  repo's real default branch; ruleset targeting set to `refs/heads/master`).
-  Release workflow state pending `NPM_TOKEN` + Version PR merge.
+- **Acceptance: ✅ CLOSED.** CI green on all three Node versions; release achieved
+  via **npm Trusted Publishing (OIDC)** — `v1.0.0` published to npm as `latest`
+  with provenance, GitHub Release auto-created from the changeset, tag pushed.
+  *(Debugging artifacts worth remembering: the repo's default branch was `master`,
+  not `main`; npm masks publish-permission failures as `E404 Not Found - PUT`;
+  npm now steers CI publishing toward Trusted Publishing over bypass-2FA tokens —
+  NPM_TOKEN approach was abandoned mid-Phase in favor of OIDC; the Release job
+  runs Node 24 for npm ≥ 11.5 OIDC support.)*
+- **Cleanup checklist:** delete the `NPM_TOKEN` repo secret + the npm granular
+  token (both obsolete under Trusted Publishing); review the 5 Dependabot PRs
+  (major bumps: vitest 4, TypeScript 7, changesets 3, codecov 7, actions 7) after
+  the docs land.
 
-### Phase 5 — Docs
+### Phase 5 — Docs — ✅ LANDED
 
-- [ ] README rewrite: ESM quickstart, pluggable-algorithm example (custom
-  hierarchical or GPA wrapper), seeded-reproducibility example, API tables.
-- [ ] **Migration guide 0.0.4 → 1.0.0**: mapping table of old↔new names
-  (`gap_statistic(d,1,5)` → `gapStatistic(d, {kMin:1, kMax:5})`,
-  `result.gap_stddevs` → `result.referenceSds`, …).
-- [ ] JSDoc on every public export so `tsc` emits hand-quality `.d.ts`; note the
-  Tibshirani, Walther & Hastie (2001) citation in `gapStatistic` docs.
+- [x] README fully rewritten for 1.0.0: requirements (Node ≥ 20, ESM), install,
+  quickstart with **executed-verified** output (`clusterSize 3` on a planted 12-point
+  dataset — across 4 seeds and 30/30 unseeded runs), pluggable `ClusteringFn`
+  demonstrated with a complete, runnable single-linkage agglomerative example,
+  seeded-reproducibility section, full options/result/migrations tables, API surface
+  reference, development scripts, paper citation.
+- [x] **Docs-example verification discipline:** every README code sample was executed
+  against the built library before publication. This caught (and fixed) a false
+  `// → 3` claim inherited from 0.x README folklore — the legacy 7-point demo array
+  actually yields `clusterSize 6` under 1.0.0's uniform null model (its real-data
+  nearest pairs are far tighter than uniform draws; the gap grows monotonically with k).
+- [x] Migration guide lives in the release notes (v1.0.0 GitHub Release) + compact
+  table in README.
+- [x] Public API JSDoc verified through generated `.d.ts` output (Phase 2).
+- **Remaining (final phase):** Phase 3 hardening — coverage thresholds + edge cases;
+  review and merge the 5 open Dependabot PRs (all majors: vitest 4, TypeScript 7,
+  changesets 3, codecov 7, actions 7) in a dedicated pass.
 
 ---
 
