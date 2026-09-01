@@ -259,13 +259,14 @@ Every module is pure (no I/O, no globals); randomness only enters via injected `
 - [x] `.nvmrc` (22); `dist/` + `coverage/` already git-ignored (Phase 0).
 - [x] Property-style invariants covered without `@fast-check` (row-permutation
   invariance, input non-mutation, determinism) — no extra dependency.
-- **Outstanding:** the 5 open Dependabot PRs (all majors — vitest 4, TypeScript 7,
-  changesets 3, codecov 7, actions 7). Merge guidance: #1/#2/#4 are safe to merge and
-  CI-verify individually; **#3 (changesets/action v2) and #5 (npm group) must land
-  together** — action v2 requires changesets CLI ≥ 3 and renames its inputs
-  (`version-script`, `publish-script`, and a `github-token` *input* instead of env);
-  our release already ships via Trusted Publishing so the coordinated migration is the
-  only remaining release-plumbing change left in the repo.
+- **Outstanding → ✅ RESOLVED.** All 5 Dependabot PRs handled: #1 (setup-node 7),
+  #2 (checkout 7), #4 (codecov 7), #5 (npm group: **vitest 4**, **TypeScript 7**,
+  **changesets CLI 3**) merged via the UI; #3 (action v2) was closed by dependabot
+  during rebases and superseded by a manual migration — `release.yml` now uses
+  `changesets/action@v2` with the renamed inputs (`version-script`, `publish-script`)
+  and `github-token` as an input (v2 no longer reads `GITHUB_TOKEN` from env),
+  running against CLI 3 under npm Trusted Publishing. Final PR state verified via
+  the GitHub API (0 open PRs; `dist-tags.latest: 1.0.0` unchanged).
 
 ### Phase 4 — CI / release plumbing — ✅ LANDED (workflows ready; manual activation below)
 
