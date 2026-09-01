@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Version packages (or publish when a Version PR was merged)
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: npm run version-packages
           publish: npm run release
