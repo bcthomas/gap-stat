@@ -20,10 +20,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node 22
+      - name: Set up Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
@@ -37,6 +37,6 @@ jobs:
           publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # npm >= 9.5 reads this for provenance; changeset publish inherits it.
+          # Authentication uses npm Trusted Publishing (OIDC) — no NPM_TOKEN.
           NPM_CONFIG_PROVENANCE: true
